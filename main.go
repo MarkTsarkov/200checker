@@ -25,7 +25,7 @@ func MakeRequest() {
 
 	url, _ = strings.CutSuffix(url, "\n")
 
-	resp, err := http.StatusText(url)
+	resp := http.StatusText(url)
 	if err != nil {
 		log.Fatalln(err)
 	}
