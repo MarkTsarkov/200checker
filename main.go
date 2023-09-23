@@ -18,12 +18,12 @@ func MakeRequest() {
 	fmt.Println("Web-site to check status:\n")
 
 	reader := bufio.NewReader(os.Stdin) 
-	url, err := reader.ReadString("\n")
+	url, err := reader.ReadString('\n')
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	// url = strings.CutSuffix(url, "\n")
+	url = strings.CutSuffix(url, "\n")
 
 	resp, err := http.Get(url)
 	if err != nil {
