@@ -23,7 +23,7 @@ func MakeRequest() {
 		log.Fatalln(err)
 	}
 
-	url = strings.CutSuffix(url, "\n")
+	url, _ = strings.CutSuffix(url, "\n")
 
 	resp, err := http.Get(url)
 	if err != nil {
