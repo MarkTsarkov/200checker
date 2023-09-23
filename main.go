@@ -15,7 +15,7 @@ func main() {
 }
 
 func MakeRequest() {
-	fmt.Println("Web-site to check status:\n")
+	fmt.Println("Web-site to check status:")
 
 	reader := bufio.NewReader(os.Stdin) 
 	url, err := reader.ReadString('\n')
@@ -25,7 +25,7 @@ func MakeRequest() {
 
 	url, _ = strings.CutSuffix(url, "\n")
 
-	resp, err := http.Get(url)
+	resp, err := http.StatusText(url)
 	if err != nil {
 		log.Fatalln(err)
 	}
