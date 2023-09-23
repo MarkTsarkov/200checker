@@ -5,6 +5,10 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"fmt"
+	"bufio"
+	"os"
+	""
 )
 
 func main() {
@@ -12,11 +16,10 @@ func main() {
 }
 
 func MakeRequest() {
-	var url string
 	fmt.Println("Web-site to check status:\n")
 
 	reader := bufio.NewReader(os.Stdin) 
-	url, err = reader.ReadString("\n")
+	url, err := reader.ReadString("\n")
 	if err != nil {
 		log.Fatalln(err)
 	}
