@@ -1,13 +1,13 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"strings"
-	"fmt"
-	"bufio"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -15,9 +15,9 @@ func main() {
 }
 
 func MakeRequest() {
-	fmt.Println("Web-site to check status:\n")
+	fmt.Println("Web-site to check status:")
 
-	reader := bufio.NewReader(os.Stdin) 
+	reader := bufio.NewReader(os.Stdin)
 	url, err := reader.ReadString('\n')
 	if err != nil {
 		log.Fatalln(err)
@@ -26,6 +26,7 @@ func MakeRequest() {
 	url, _ = strings.CutSuffix(url, "\n")
 	CheckHttpsPrefix(&url)
 
+	// trunk-ignore(gokart/CWE-918:-Server-Side-Request-Forgery)
 	resp, err := http.Get(url)
 	if err != nil {
 		log.Fatalln(err)
@@ -41,10 +42,7 @@ func MakeRequest() {
 }
 
 func CheckHttpsPrefix(url *string) {
-	if strings.HasPrefix(url, "https://") || strings.HasPrefix(url, "http://") {
-		return url
-	} else {
-		url = "http://" + *url
-		return url
+	if !strings.HasPrefix(*url, "https://") || !strings.HasPrefix(*url, "http://") {
+		*url = "http://" + *url
 	}
 }
