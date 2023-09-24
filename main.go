@@ -24,6 +24,7 @@ func MakeRequest() {
 	}
 
 	url, _ = strings.CutSuffix(url, "\n")
+	CheckHttpsPrefix(&url)
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -37,4 +38,13 @@ func MakeRequest() {
 	}
 
 	log.Println(string(body))
+}
+
+func CheckHttpsPrefix(url *string) {
+	if strings.HasPrefix(url, "https://") || strings.HasPrefix(url, "http://") {
+		return url
+	} else {
+		url = "http://" + *url
+		return url
+	}
 }
