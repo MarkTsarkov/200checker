@@ -31,7 +31,6 @@ func main() {
 		lines = append(lines, line)
 	}
 	wg.Add(len(lines))
-	fmt.Println(lines)
 
 	err := scanner.Err()
 	if err != nil {
@@ -40,22 +39,14 @@ func main() {
 
 	checker := func (url string) {
 		defer wg.Done() //уведомление о завершении горутины
-		fmt.Println(url) //проверка кол-ва индексов
 		MakeRequest(&url)
 	}
 
-//	for i:=0; i<len(lines); i++ {
-//		fmt.Println(i) //проверка кол-ва индексов
-//		go checker(&lines[i])
-//	}
-//
 	for _, line := range lines {
 		go checker(line)
 	}
-	fmt.Println(len(lines))
 
 	wg.Wait()
-	fmt.Println("Горутины завершили выполнение") 
 }
 
 func MakeRequest(url *string) {
@@ -71,7 +62,6 @@ func MakeRequest(url *string) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println(curUrl + " - actual url")
 	log.Println(*url + " " + string(body))
 }
 
