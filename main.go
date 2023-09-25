@@ -6,28 +6,57 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"sync"
+
+	//	"net/url"
 	"os"
 	"strings"
 )
 
 func main() {
-	MakeRequest()
-}
+	var wg sync.WaitGroup
 
-func MakeRequest() {
-	fmt.Println("Web-site to check status:")
+	fmt.Println("Web-sites to check status:")
 
-	reader := bufio.NewReader(os.Stdin)
-	url, err := reader.ReadString('\n')
+	scanner := bufio.NewScanner(os.Stdin)
+	
+	var lines []string
+	for {
+		scanner.Scan()
+		line := scanner.Text()
+
+		if len(line) == 0 {
+			break
+		}
+		lines = append(lines, line)
+	}
+	wg.Add(len(lines)-1)
+	fmt.Println(lines)
+
+	err := scanner.Err()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal(err)
 	}
 
-	url, _ = strings.CutSuffix(url, "\n")
-	CheckHttpsPrefix(&url)
+	checker := func (url *string) {
+		defer wg.Done() //уведомление о завершении горутины
+		MakeRequest(url)
+	}
 
-	// trunk-ignore(gokart/CWE-918:-Server-Side-Request-Forgery)
-	resp, err := http.Get(url)
+	for i, line := range lines {
+		fmt.Println(i) //проверка кол-ва индексов
+		go checker(&line)
+	}
+	fmt.Println(len(lines))
+
+	wg.Wait()
+	fmt.Println("Горутины завершили выполнение") 
+}
+
+func MakeRequest(url *string) {
+	curUrl := *url
+	CheckHttpsPrefix(&curUrl)
+	resp, err := http.Get(curUrl)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -37,12 +66,16 @@ func MakeRequest() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	log.Println(string(body))
+	fmt.Println(curUrl + " - actual url")
+	log.Println(*url + " " + string(body))
 }
 
 func CheckHttpsPrefix(url *string) {
 	if !strings.HasPrefix(*url, "https://") || !strings.HasPrefix(*url, "http://") {
-		*url = "http://" + *url
+		*url = "http://www." + *url
 	}
 }
+
+// trunk-ignore(git-diff-check/error)
+// - вынести makeRequest в небольшую функицю
+// - в main запускать makeRequest в цикле считывания множества строк с url
