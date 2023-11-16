@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"database/sql"
 	"fmt"
 	"io"
 	"log"
@@ -16,7 +17,12 @@ import (
 )
 
 func main() {
-
+	connStr := "user=postgres password=password dbname=checker sslmode=disable"
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+        panic(err)
+    } 
+    defer db.Close()
 
 	fmt.Println("Web-sites to check status:")
 	scanner := bufio.NewScanner(os.Stdin)
@@ -30,7 +36,7 @@ func main() {
 		}
 		lines = append(lines, line)
 	}
-	err := scanner.Err()
+	err = scanner.Err()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,7 +44,7 @@ func main() {
 	ch := make(chan string, len(lines))
 	go UrlInsert(lines, ch)
 	time.Sleep(2*time.Second)
-	go MakeRequest(ch)
+	go MakeRequest(ch, db)
 
 	signalChannel := make(chan os.Signal)
 	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
@@ -57,9 +63,7 @@ func main() {
 	}
 }
 
-func MakeRequest(ch chan string) {
-	fmt.Println("Processing...")
-	for {
+func MakeRequest(ch chan string, db *sql.DB) {
 		for url := range ch {
 			fmt.Println(url)
 			CheckHttpsPrefix(&url)
@@ -75,8 +79,21 @@ func MakeRequest(ch chan string) {
 				log.Fatalln(err)
 			}
 			log.Println(url + " " + string(body))
+
+			dataSlice := strings.Split(string(body), " ")
+			data := make([]string, 3)
+			data[0]=dataSlice[0]+dataSlice[1]
+			data[1]=dataSlice[2]
+			data[2]=dataSlice[3]+dataSlice[4]
+
+			result, err := db.Exec("INSERT INTO logs (Website, Time, Status) values ($1, $2, $3)", 
+			data[0], data[1], data[2])
+			if err != nil{
+				panic(err)
+			}
+			fmt.Println(result.RowsAffected()) 
 		}
-	}
+	
 }
 	
 
@@ -88,46 +105,11 @@ func CheckHttpsPrefix(url *string) {
 }
 
 func UrlInsert(lines []string, ch chan string) {
-	fmt.Println("Заливаю урлы в канал...")
 	for {
-		for i, line := range lines {
-			fmt.Printf("Цикл %d прогона началася\n", i)
+		for _, line := range lines {
 			ch <- line
-			fmt.Printf("В канал залит урл: %s\n", line)
-//			if i==len(lines)-1 {
-//				i=-1
-//			}
-			fmt.Printf("Цикл %d прогона закончился\n", i)
 		}
-		fmt.Println("Урлы залиты, жду обработки...")
 		time.Sleep(10*time.Second)
 	}
-
-
-	//ticker := time.NewTicker(5 * time.Second)
-	//done := make(chan bool)
-//
-	//for {
-	//	select{
-	//	case <-done:
-	//		return
-	//	case t := <-ticker.C:
-	//		fmt.Println("Tick at", t)
-	//		fmt.Println("Таймер тикает...")
-	//		for _, url := range lines {
-	//			ch <- url
-	//			fmt.Println("+1 урл в канале...")
-	//		}
-	//	}
-	//	}
-	//	
-	//time.Sleep(15*time.Second)
-	//done <- true
-//	_, ok := <- ticker.C; if ok{
-//		fmt.Println("Таймер тикает...")
-//		for _, url := range lines {
-//			ch <- url
-//			fmt.Println("+1 урл в канале...")
-//		}
-//	}
 }
+
