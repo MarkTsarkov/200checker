@@ -11,3 +11,6 @@ rm:
 
 up:
 	docker-compose -f docker-compose.yml up --force-recreate
+
+up-build:
+	docker-compose up -d --build

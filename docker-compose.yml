@@ -14,4 +14,11 @@ services:
       # - ./new_database.sql:/docker-entrypoint-initdb.d/new_database.sql
     network_mode: 'host'
     ports:
-      - 8080:5432
+      - 5433:5432
+
+  app:
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+#   command: "./app"
