@@ -10,5 +10,9 @@
     {
         "company": "Amazon",
         "url": "amazon.com"
+    },
+    {
+        "company": "LifeHacker",
+        "url": "lifehacker.ru"
     }
 ]
