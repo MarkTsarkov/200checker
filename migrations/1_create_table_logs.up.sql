@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS logs(
+    id INTEGER NOT NULL PRIMARY KEY,
+    website VARCHAR(255),
+    time TIMESTAMP,
+    status VARCHAR(255),
+);

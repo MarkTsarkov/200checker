@@ -2,7 +2,7 @@ package main
 
 import (
 	_ "bufio"
-	_ "database/sql"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,6 +14,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 type Website struct {
@@ -22,12 +24,12 @@ type Website struct {
 }
 
 func main() {
-//	connStr := "user=postgres password=password dbname=checker sslmode=disable"
-//	db, err := sql.Open("postgres", connStr)
-//	if err != nil {
-//        panic(err)
-//    } 
-//    defer db.Close()
+	connStr := "user=postgres password=password dbname=checker sslmode=disable"
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+        panic(err)
+    } 
+    defer db.Close()
 
 	var lines []Website
 	weblist, err := os.Open("web_list.json")
@@ -67,10 +69,10 @@ func main() {
 	ch := make(chan string, len(lines))
 	go UrlInsert(lines, ch)
 	time.Sleep(2*time.Second)
-	go MakeRequest(ch)
+	go MakeRequest(ch, db)
 
 	signalChannel := make(chan os.Signal)
-	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGTERM, )
 	for {
 		sig := <-signalChannel
 		switch sig {
@@ -86,7 +88,7 @@ func main() {
 	}
 }
 
-func MakeRequest(ch chan string) {
+func MakeRequest(ch chan string, db *sql.DB ) {
 		for url := range ch {
 			CheckHttpsPrefix(&url)
 			resp, err := http.Get(url)
@@ -100,20 +102,23 @@ func MakeRequest(ch chan string) {
 			if err != nil {
 				log.Fatalln(err)
 			}
-			log.Println(url + " " + string(body))
+			
+			output := time.DateTime + " " + url + " " + string(body)
+			log.Println(output)
 
-//			dataSlice := strings.Split(string(body), " ")
-//			data := make([]string, 3)
-//			data[0]=dataSlice[0]+dataSlice[1]
-//			data[1]=dataSlice[2]
-//			data[2]=dataSlice[3]+dataSlice[4]
-//
-//			result, err := db.Exec("INSERT INTO logs (Website, Time, Status) values ($1, $2, $3)", 
-//			data[0], data[1], data[2])
-//			if err != nil{
-//				panic(err)
-//			}
-//			fmt.Println(result.RowsAffected()) 
+			dataSlice := strings.Split(string(output), " ")
+
+			data := make(map[string]string, 3)
+			data["dateAndTime"] = dataSlice[0] + " " + dataSlice[1]
+			data["website"] 	= dataSlice[2]
+			data["status"]		= dataSlice[3] + " " + dataSlice[4]
+
+			result, err := db.Exec("INSERT INTO logs (Website, Time, Status) values ($1, $2, $3)", 
+			data["website"], data["dateAndTime"], data["status"])
+			if err != nil{
+				panic(err)
+			}
+			fmt.Println(result.RowsAffected()) 
 		}
 	
 }
